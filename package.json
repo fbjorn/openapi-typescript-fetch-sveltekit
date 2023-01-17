@@ -37,19 +37,20 @@
   },
   "homepage": "https://github.com/ajaishankar/openapi-typescript-fetch#readme",
   "devDependencies": {
-    "msw": "^0.35.0",
+    "@tsconfig/svelte": "^3.0.0",
+    "@types/jest": "^27.0.0",
     "@typescript-eslint/eslint-plugin": "^4.30.0",
     "@typescript-eslint/parser": "^4.31.0",
+    "codecov": "^3.8.2",
     "eslint": "^7.32.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
-    "codecov": "^3.8.2",
     "jest": "^27.2.5",
-    "@types/jest": "^27.0.0",
+    "msw": "^0.35.0",
     "prettier": "^2.4.0",
     "rimraf": "^3.0.0",
-    "ts-node": "^10.0.0",
     "ts-jest": "^27.0.0",
+    "ts-node": "^10.9.1",
     "typescript": "^4.4.3",
     "whatwg-fetch": "^3.6.2"
   },
@@ -68,5 +69,10 @@
     "test:coverage:local": "npm run build && jest --no-cache --collectCoverage",
     "typecheck": "tsc --noEmit --project tsconfig.json",
     "format": "prettier -w ."
+  },
+  "dependencies": {
+    "cross-fetch": "^3.1.5",
+    "node-fetch": "^3.3.0",
+    "svelte": "^3.55.1"
   }
 }

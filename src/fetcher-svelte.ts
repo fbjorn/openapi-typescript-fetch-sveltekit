@@ -1,6 +1,7 @@
 import type {
   _TypedWrappedFetch,
   ApiError,
+  ApiRequest,
   ApiResponse,
   CreateFetch,
   FetchConfig,
@@ -12,7 +13,9 @@ import type {
   RealFetch,
   Request,
   TypedWrappedFetch,
-} from './types.js'
+} from './types-svelte.js'
+
+import { writable } from 'svelte/store'
 
 const sendBody = (method: Method) =>
   method === 'post' ||
@@ -174,22 +177,41 @@ async function fetchJson(
   throw new ApiError(result)
 }
 
-async function fetchUrl<R>(request: Request) {
+function fetchUrl<R>(request: Request) {
   const { url, init } = getFetchParams(request)
 
-  const response = await fetchJson(request.realFetch, url, init)
+  const data = writable<R | undefined>(undefined)
+  const status = writable({ ok: false, errors: [] })
+  const ready = writable(new Promise<void>(() => {
+  }))
 
-  return response as ApiResponse<R>
+  fetch(url, init).then(async (resp) => {
+    if (resp.ok) {
+      const j = await resp.json()
+      data.set(j as R)
+      status.set({ ok: true, errors: [] })
+      ready.set(Promise.resolve())
+    } else {
+      status.set({ ok: false, errors: [] })
+    }
+  })
+
+  const req: ApiRequest<R> = {
+    data: data,
+    status: status,
+    ready: ready,
+  }
+  return req
 }
 
 function createFetch<OP>(fetch: _TypedWrappedFetch<OP>): TypedWrappedFetch<OP> {
-  const fun = async (
+  const fun = (
     realFetch: RealFetch,
     payload: OpArgType<OP>,
     init?: RequestInit,
   ) => {
     try {
-      return await fetch(realFetch, payload, init)
+      return fetch(realFetch, payload, init)
     } catch (err) {
       // @ts-ignore
       if (err instanceof ApiError) {
@@ -231,7 +253,8 @@ function fetcher<Paths>() {
     },
     path: <P extends keyof Paths>(path: P) => ({
       method: <M extends keyof Paths[P]>(method: M) => ({
-        create: function (queryParams?: Record<string, true | 1>) {
+        create: function(queryParams?: Record<string, true | 1>) {
+
           const fn = createFetch((realFetch, payload, init) =>
             // @ts-ignore
             fetchUrl({
@@ -248,12 +271,13 @@ function fetcher<Paths>() {
           fn._name = `${String(method).toUpperCase()} ${String(path)}`
 
           return fn
-        } as unknown as CreateFetch<M, Paths[P][M]>,
+          // } as unknown as CreateFetch<M, Paths[P][M]>,
+        },
       }),
     }),
   }
 }
 
-export const Fetcher = {
+export const SvelteFetcher = {
   for: <Paths extends OpenapiPaths<Paths>>() => fetcher<Paths>(),
 }
