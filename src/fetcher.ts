@@ -1,6 +1,6 @@
 import type {
   _TypedWrappedFetch,
-  ApiError,
+  // ApiError,
   ApiResponse,
   CreateFetch,
   FetchConfig,
@@ -13,6 +13,7 @@ import type {
   Request,
   TypedWrappedFetch,
 } from './types.js'
+import { ApiError } from './types'
 
 const sendBody = (method: Method) =>
   method === 'post' ||
@@ -91,7 +92,7 @@ function getBody(method: Method, payload: any) {
   return method === 'delete' && body === '{}' ? undefined : body
 }
 
-function mergeRequestInit(
+export function mergeRequestInit(
   first?: RequestInit,
   second?: RequestInit,
 ): RequestInit {
@@ -106,7 +107,7 @@ function mergeRequestInit(
   return { ...first, ...second, headers }
 }
 
-function getFetchParams(request: Request) {
+export function getFetchParams(request: Request) {
   // clone payload
   // if body is a top level array [ 'a', 'b', param: value ] with param values
   // using spread [ ...payload ] returns [ 'a', 'b' ] and skips custom keys
@@ -170,7 +171,6 @@ async function fetchJson(
     return result
   }
 
-  // @ts-ignore
   throw new ApiError(result)
 }
 
@@ -191,7 +191,6 @@ function createFetch<OP>(fetch: _TypedWrappedFetch<OP>): TypedWrappedFetch<OP> {
     try {
       return await fetch(realFetch, payload, init)
     } catch (err) {
-      // @ts-ignore
       if (err instanceof ApiError) {
         throw new fun.Error(err)
       }
@@ -199,7 +198,6 @@ function createFetch<OP>(fetch: _TypedWrappedFetch<OP>): TypedWrappedFetch<OP> {
     }
   }
 
-  // @ts-ignore
   fun.Error = class extends ApiError {
     constructor(error: ApiError) {
       super(error)
@@ -216,7 +214,6 @@ function createFetch<OP>(fetch: _TypedWrappedFetch<OP>): TypedWrappedFetch<OP> {
 
   fun._name = ''
 
-  // @ts-ignore
   return fun
 }
 
@@ -231,7 +228,7 @@ function fetcher<Paths>() {
     },
     path: <P extends keyof Paths>(path: P) => ({
       method: <M extends keyof Paths[P]>(method: M) => ({
-        create: function (queryParams?: Record<string, true | 1>) {
+        create: function(queryParams?: Record<string, true | 1>) {
           const fn = createFetch((realFetch, payload, init) =>
             // @ts-ignore
             fetchUrl({

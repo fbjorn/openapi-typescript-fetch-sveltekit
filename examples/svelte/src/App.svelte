@@ -1,8 +1,10 @@
 <script lang="ts">
-    import {addPet, findPetsByStatus} from './api'
+    import {addPet, findPetsByStatus, findPetsByStatusOriginal} from './api'
 
     const {ready, data: pets} = findPetsByStatus(fetch, {status: 'pending'})
     const r = findPetsByStatus(fetch, {status: '123'})
+
+    r.data.subscribe(v => v[0].)
 
     let soldReady = undefined
     let soldPets = []
@@ -12,6 +14,8 @@
         soldReady = req2.ready
         req2.data.subscribe(v => soldPets = v)
     }
+
+    const foo = findPetsByStatusOriginal(123)
 </script>
 
 <main>
