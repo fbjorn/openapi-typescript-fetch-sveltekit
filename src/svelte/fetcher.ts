@@ -34,19 +34,24 @@ function fetchUrl<R>(request: Request) {
         if (typeof r === 'undefined' || typeof r.data === 'undefined') {
           return
         }
-        if (r.ok) {
-          resolve(r)
-        } else {
-          resolve(r)
-        }
+        resolve(r)
       })
 
-      resp.set({
-        code: fetchRes.status,
-        data: j as R,
-        errors: [],
-        ok: fetchRes.ok,
-      })
+      if (fetchRes.ok) {
+        resp.set({
+          status: fetchRes.status,
+          data: j as R,
+          errors: [],
+          ok: true,
+        })
+      } else {
+        resp.set({
+          status: fetchRes.status,
+          data: undefined,
+          errors: [],
+          ok: false,
+        })
+      }
     })
     ready.set(promise)
     return promise

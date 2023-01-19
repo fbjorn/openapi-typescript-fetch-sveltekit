@@ -7,12 +7,20 @@ import type {
 } from '../types'
 import type { ApiError } from '../types'
 
-export type ApiResponse<R> = {
-  ok: boolean
+export type SuccessfulResp<R> = {
+  ok: true
   data: R
   errors: unknown[]
-  code: number
+  status: number
 }
+export type FailedResp = {
+  ok: false
+  data: any
+  errors: unknown[]
+  status: number
+}
+
+export type ApiResponse<R> = SuccessfulResp<R> | FailedResp
 
 export type ApiRequest<R = any> = {
   readonly resp: Writable<ApiResponse<R> | undefined>
