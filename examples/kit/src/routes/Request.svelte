@@ -1,17 +1,16 @@
 <script lang="ts">
   import { findPetsByStatus } from '$lib/api'
 
-  let loading = undefined
+  let loading: any | undefined = undefined
   let names: string[] = []
 
   function onClick() {
-    // Gotcha: types are detected here
-    const { ready, data } = findPetsByStatus(fetch, { status: 'available' })
+    const { ready, resp } = findPetsByStatus(fetch, { status: 'available' })
 
     loading = ready
-    data.subscribe((pets) => {
-      if (pets) {
-        // Gotcha: types are detected here. check `p`
+    resp.subscribe((r) => {
+      const pets = r?.data || []
+      if (r && pets) {
         names = pets?.map((p) => p.name).slice(0, 5)
       }
     })
@@ -25,7 +24,7 @@
   {#if $loading}
     {#await $loading}
       <div>Fetching..</div>
-    {:then _}
+    {:then awaitedData}
       <ul>
         {#each names as name}
           <li>{name}</li>

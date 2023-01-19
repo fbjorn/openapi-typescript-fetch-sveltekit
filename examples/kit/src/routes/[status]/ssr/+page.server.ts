@@ -9,6 +9,7 @@ export const load = (async ({ params, fetch }) => {
       status: params.status,
     }
   }
+  console.log("I'm running on server", fetch)
   const request = findPetsByStatus(fetch, { status: params.status })
   const resp = await request.isLoaded
   if (resp.ok && resp.data !== undefined) {

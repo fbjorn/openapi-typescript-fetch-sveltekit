@@ -3,10 +3,10 @@
   import { derived } from 'svelte/store'
 
   let request = findPetsByStatus(fetch, { status: 'available' })
-  let ready = request.ready
+  let loading = request.ready
 
   // since the array can be huge, let's keep only 5 pets
-  $: pets = derived(request.data, (v) => (v || []).slice(0, 5))
+  $: pets = derived(request.resp, (v) => (v ? v.data : []).slice(0, 5))
 
   function onClick() {
     request.reload()
@@ -16,14 +16,19 @@
 <section>
   <h3>Demo: reload a request</h3>
   <div>Pets:</div>
-  {#await $ready}
+  {#await $loading}
     <div>Fetching..</div>
-  {:then _}
+  {:then resp}
+    <div>
+      this pet is taken from `:then resp` = {(resp?.data || [])[0].name}
+    </div>
     <ul>
       {#each $pets as pet}
         <li>{pet.name}</li>
       {/each}
     </ul>
+  {:catch}
+    <div>error</div>
   {/await}
   <button on:click={onClick}>Fetch them again</button>
 </section>

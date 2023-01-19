@@ -7,11 +7,18 @@ import type {
 } from '../types'
 import type { ApiError } from '../types'
 
+export type ApiResponse<R> = {
+  ok: boolean
+  data: R
+  errors: unknown[]
+  code: number
+}
+
 export type ApiRequest<R = any> = {
-  readonly data: Writable<R | undefined>
-  readonly status: Writable<{ ok: boolean; errors: unknown[] }>
-  readonly ready: Writable<Promise<void>>
-  readonly reload: () => Promise<void>
+  readonly resp: Writable<ApiResponse<R> | undefined>
+  readonly isLoaded: Promise<ApiResponse<R>>
+  readonly ready: Writable<undefined | Promise<ApiResponse<R>>>
+  readonly reload: () => Promise<ApiResponse<R>>
 }
 
 export type _SvelteTypedWrappedFetch<OP> = (

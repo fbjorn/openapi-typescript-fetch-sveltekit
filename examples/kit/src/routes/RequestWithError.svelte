@@ -1,19 +1,18 @@
 <script lang="ts">
   import { findPetsByStatusThatFails } from '$lib/api'
-  import { get } from 'svelte/store'
 
-  let loading = undefined
   let error = 'Oops'
+  let loading: any = undefined
 
   function onClick() {
     // Gotcha: types are detected here
-    const { ready, data, status } = findPetsByStatusThatFails(fetch, {
+    const { ready, resp } = findPetsByStatusThatFails(fetch, {
       status: 'available',
     })
-
     loading = ready
-    ready.subscribe((_) => {
-      if (!get(status).ok) {
+
+    resp.subscribe((r) => {
+      if (!r?.ok) {
         error = 'Something went wrong..'
       }
     })
@@ -23,13 +22,13 @@
 <section>
   <h3>Demo: successfull runtime request</h3>
   <button on:click={onClick}>Fetch me</button>
-  {#if $loading}
-    {#await $loading}
+  {#if loading}
+    {#await loading}
       <div>Fetching..</div>
     {:then _}
-      <div>You should not see this message. You will see the error below:</div>
-    {:catch}
-      <div>{error}</div>
+      {#if error}
+        <div>{error}</div>
+      {/if}
     {/await}
   {/if}
 </section>

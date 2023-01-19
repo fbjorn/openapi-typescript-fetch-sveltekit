@@ -1,4 +1,4 @@
-import { derived, writable } from 'svelte/store'
+import { writable } from 'svelte/store'
 
 import { getFetchParams, mergeRequestInit } from '../fetcher'
 import type {
@@ -12,37 +12,56 @@ import type {
   OpenapiPaths,
   Method,
 } from '../types'
-import type { ApiRequest, SvelteCreateFetch } from './types'
+import type { ApiRequest, ApiResponse, SvelteCreateFetch } from './types'
 import { ApiError } from '../types'
 
 function fetchUrl<R>(request: Request) {
   const { url, init } = getFetchParams(request)
 
-  const initValue = undefined
-  const data = writable<R | undefined>(initValue)
-  const status = writable({ ok: false, errors: [] })
-  const ready = writable(new Promise<void>(() => {}))
+  const resp = writable<ApiResponse<R> | undefined>()
+  const ready = writable<Promise<ApiResponse<R>>>(new Promise(() => {
+  }))
+
+  function apiCall(): Promise<ApiResponse<R>> {
+    const promise = new Promise<ApiResponse<R>>(async (resolve) => {
+      const fetchRes = await request.realFetch(url, init)
+      const j = await fetchRes.json()
+
+      resp.subscribe(r => {
+          if (typeof r === 'undefined' || typeof r.data === 'undefined') {
+            return
+          }
+          if (r.ok) {
+            resolve(r)
+          } else {
+            resolve(r)
+          }
+        },
+      )
+
+      resp.set({
+        code: fetchRes.status,
+        data: j as R,
+        errors: [],
+        ok: fetchRes.ok,
+      })
+    })
+    ready.set(promise)
+    return promise
+  }
+
+  const isLoaded = apiCall()
 
   async function reload() {
-    ready.set(new Promise<void>(() => {}))
-    const resp = await fetch(url, init)
-    if (resp.ok) {
-      const j = await resp.json()
-      data.set(j as R)
-      status.set({ ok: true, errors: [] })
-      ready.set(Promise.resolve())
-    } else {
-      status.set({ ok: false, errors: [] })
-      ready.set(Promise.reject())
-    }
+    return apiCall()
   }
-  reload()
+
 
   return {
-    data,
-    status,
+    resp,
     ready,
     reload,
+    isLoaded,
   } as ApiRequest<R>
 }
 

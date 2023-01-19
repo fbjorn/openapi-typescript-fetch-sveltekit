@@ -1,5 +1,5 @@
 // TODO: import from `/src/svelte` or smth
-import { SvelteFetcher } from 'openapi-typescript-fetch-sveltekit'
+import { SvelteFetcher, Fetcher } from 'openapi-typescript-fetch-sveltekit'
 
 import type { paths } from '../../../../api'
 // declare fetcher for paths
@@ -22,6 +22,16 @@ localFetcher.configure({
 })
 
 export const findPetsByStatusThatFails = localFetcher
+  .path('/pet/findByStatus')
+  .method('get')
+  .create()
+
+const plainFetcher = Fetcher.for<paths>()
+plainFetcher.configure({
+  baseUrl: 'https://petstore.swagger.io/v2',
+})
+
+export const findPetsByStatusPlainFetcher = plainFetcher
   .path('/pet/findByStatus')
   .method('get')
   .create()
