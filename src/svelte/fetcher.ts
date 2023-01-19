@@ -1,4 +1,5 @@
 import { writable } from 'svelte/store'
+import type { Unsubscriber } from 'svelte/store'
 
 import { getFetchParams, mergeRequestInit } from '../fetcher'
 import type {
@@ -15,29 +16,30 @@ import type {
 import type { ApiRequest, ApiResponse, SvelteCreateFetch } from './types'
 import { ApiError } from '../types'
 
+
 function fetchUrl<R>(request: Request) {
   const { url, init } = getFetchParams(request)
 
   const resp = writable<ApiResponse<R> | undefined>()
   const ready = writable<Promise<ApiResponse<R>>>(new Promise(() => {
   }))
+  let unsubscribe: Unsubscriber | undefined = undefined
 
-  function apiCall(): Promise<ApiResponse<R>> {
+  const apiCall: () => Promise<ApiResponse<R>> = () => {
     const promise = new Promise<ApiResponse<R>>(async (resolve) => {
       const fetchRes = await request.realFetch(url, init)
       const j = await fetchRes.json()
 
-      resp.subscribe(r => {
-          if (typeof r === 'undefined' || typeof r.data === 'undefined') {
-            return
-          }
-          if (r.ok) {
-            resolve(r)
-          } else {
-            resolve(r)
-          }
-        },
-      )
+      unsubscribe = resp.subscribe((r) => {
+        if (typeof r === 'undefined' || typeof r.data === 'undefined') {
+          return
+        }
+        if (r.ok) {
+          resolve(r)
+        } else {
+          resolve(r)
+        }
+      })
 
       resp.set({
         code: fetchRes.status,
@@ -50,12 +52,15 @@ function fetchUrl<R>(request: Request) {
     return promise
   }
 
+
   const isLoaded = apiCall()
 
   async function reload() {
+    if (unsubscribe) {
+      unsubscribe()
+    }
     return apiCall()
   }
-
 
   return {
     resp,
