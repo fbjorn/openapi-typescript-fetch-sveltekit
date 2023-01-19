@@ -31,7 +31,7 @@ export type OpArgType<OP> = OP extends {
   ? P & Q & (B extends Record<string, unknown> ? B[keyof B] : unknown) & RB
   : Record<string, never>
 
-type OpResponseTypes<OP> = OP extends {
+export type OpResponseTypes<OP> = OP extends {
   responses: infer R
 }
   ? {

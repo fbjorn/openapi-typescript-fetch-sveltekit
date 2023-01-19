@@ -13,20 +13,19 @@ import type {
   OpenapiPaths,
   Method,
 } from '../types'
-import type { ApiRequest, ApiResponse, SvelteCreateFetch } from './types'
+import type { ApiRequest, ApiResponse, Codes, SvelteCreateFetch } from './types'
 import { ApiError } from '../types'
 
-
-function fetchUrl<R>(request: Request) {
+function fetchUrl<R, E extends Codes>(request: Request) {
   const { url, init } = getFetchParams(request)
 
-  const resp = writable<ApiResponse<R> | undefined>()
-  const ready = writable<Promise<ApiResponse<R>>>(new Promise(() => {
+  const resp = writable<ApiResponse<R, E> | undefined>()
+  const ready = writable<Promise<ApiResponse<R, E>>>(new Promise(() => {
   }))
   let unsubscribe: Unsubscriber | undefined = undefined
 
-  const apiCall: () => Promise<ApiResponse<R>> = () => {
-    const promise = new Promise<ApiResponse<R>>(async (resolve) => {
+  const apiCall: () => Promise<ApiResponse<R, E>> = () => {
+    const promise = new Promise<ApiResponse<R, E>>(async (resolve) => {
       const fetchRes = await request.realFetch(url, init)
       const j = await fetchRes.json()
 
@@ -37,26 +36,32 @@ function fetchUrl<R>(request: Request) {
         resolve(r)
       })
 
-      if (fetchRes.ok) {
-        resp.set({
-          status: fetchRes.status,
-          data: j as R,
-          errors: [],
-          ok: true,
-        })
-      } else {
-        resp.set({
-          status: fetchRes.status,
-          data: undefined,
-          errors: [],
-          ok: false,
-        })
+      switch (fetchRes.status) {
+        case 200:
+          resp.set({
+            status: 200,
+            data: j as R,
+            ok: true,
+          })
+          break
+        case 422:
+          resp.set({
+            status: 422,
+            data: j as E[422],
+            ok: false,
+          })
+          break
+        default:
+          resp.set({
+            status: fetchRes.status,
+            data: undefined,
+            ok: false,
+          })
       }
     })
     ready.set(promise)
     return promise
   }
-
 
   const isLoaded = apiCall()
 
@@ -72,7 +77,7 @@ function fetchUrl<R>(request: Request) {
     ready,
     reload,
     isLoaded,
-  } as ApiRequest<R>
+  } as ApiRequest<R, E>
 }
 
 function createFetch<OP>(fetch: _TypedWrappedFetch<OP>): TypedWrappedFetch<OP> {
